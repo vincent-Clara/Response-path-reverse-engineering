@@ -66,10 +66,18 @@ window.listModels = async function (cfg) {
   if (kind === 'gemini') headers['x-goog-api-key'] = cfg.apiKey;
   else if (kind === 'anthropic') Object.assign(headers, { 'x-api-key': cfg.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' });
   else if (cfg.apiKey) headers['Authorization'] = 'Bearer ' + cfg.apiKey;
-  const res = await fetch(url, { headers });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const isLocal = /\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])/.test(base);
+  const hint = cfg.provider === 'ollama'
+    ? '。Ollama 預設會擋掉從網頁來的請求：請先設定環境變數 OLLAMA_ORIGINS=*（或此網頁網址）後重啟 Ollama'
+    : cfg.provider === 'lmstudio' ? '。請在 LM Studio 的 Server 設定開啟「Enable CORS」並確認伺服器已啟動'
+    : isLocal ? '。請確認本地伺服器已啟動並允許跨來源請求（CORS）' : '';
+  let res;
+  try { res = await fetch(url, { headers }); }
+  catch (e) { throw new Error('連線失敗（伺服器沒開或被 CORS 擋下）' + hint); }
+  if (!res.ok) throw new Error(`HTTP ${res.status}` + (res.status === 403 ? hint : ''));
   const d = await res.json();
   if (kind === 'gemini') return (d.models || []).map(m => m.name.replace(/^models\//, ''));
+  if (Array.isArray(d.models)) return d.models.map(m => m.name || m.model);
   return (d.data || []).map(m => m.id);
 };
 

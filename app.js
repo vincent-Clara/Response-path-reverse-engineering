@@ -48,9 +48,22 @@ $('form').addEventListener('submit', async e => {
   $('send').disabled = $('input').disabled = false; $('sendLabel').textContent = '注入提示詞';
 });
 $('fetchModels').addEventListener('click', async () => {
-  try { const ms = await listModels(cfg); $('modelList').innerHTML = ms.map(m => `<option value="${esc(m)}">`).join(''); $('connMsg').textContent = `取得 ${ms.length} 個模型`; }
-  catch (e) { $('connMsg').textContent = '取得模型失敗：' + e.message; }
+  const msg = $('connMsg'); msg.className = 'text-[11px] mt-2 break-all text-zinc-400'; msg.textContent = '取得模型列表中…';
+  try {
+    const ms = await listModels(cfg);
+    $('modelList').innerHTML = ms.map(m => `<option value="${esc(m)}">`).join('');
+    const pick = $('modelPick');
+    pick.innerHTML = '<option value="">— 從取得的列表選擇模型（共 ' + ms.length + ' 個）—</option>' + ms.map(m => `<option value="${esc(m)}"${m === cfg.model ? ' selected' : ''}>${esc(m)}</option>`).join('');
+    pick.classList.toggle('hidden', !ms.length);
+    if (ms.length && !ms.includes(cfg.model)) { cfg.model = ms[0]; save(); load(); pick.value = ms[0]; }
+    msg.className = 'text-[11px] mt-2 break-all text-emerald-400';
+    msg.textContent = ms.length ? `✅ 取得 ${ms.length} 個模型，可從上方下拉選單選擇` : '⚠️ 連上了，但伺服器沒有回報任何模型（本地端可能還沒下載或載入模型）';
+  } catch (e) {
+    msg.className = 'text-[11px] mt-2 break-all text-rose-400';
+    msg.textContent = '❌ 取得模型失敗：' + e.message;
+  }
 });
+$('modelPick').addEventListener('change', e => { if (e.target.value) { cfg.model = e.target.value; save(); load(); } });
 $('testConn').addEventListener('click', async () => {
   $('connMsg').textContent = '測試中…';
   try { const t = await callLLM({ ...cfg, jsonMode: false, maxTokens: 32 }, 'Reply with OK.', 'ping'); $('connMsg').textContent = '✅ 已連線：' + t.slice(0, 40); setStatus('ONLINE', 'text-emerald-500'); }
