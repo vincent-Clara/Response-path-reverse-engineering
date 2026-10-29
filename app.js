@@ -1,9 +1,9 @@
 const $ = id => document.getElementById(id);
 const LS = 'rpre.settings.v1';
 const defaults = { provider: 'openai', baseUrl: PROVIDERS.openai.baseUrl, apiKey: '', model: PROVIDERS.openai.model,
-  temperature: 0.7, maxTokens: 4096, jsonMode: true, context: '', systemPrompt: SYSTEM_INSTRUCTION };
+  temperature: 0.7, maxTokens: 4096, jsonMode: true, context: '' };
 let cfg = Object.assign({}, defaults, JSON.parse(localStorage.getItem(LS) || '{}'));
-const fields = ['provider', 'baseUrl', 'apiKey', 'model', 'temperature', 'maxTokens', 'jsonMode', 'systemPrompt'];
+const fields = ['provider', 'baseUrl', 'apiKey', 'model', 'temperature', 'maxTokens', 'jsonMode'];
 const icons = () => window.lucide && lucide.createIcons();
 const save = () => localStorage.setItem(LS, JSON.stringify(cfg));
 
@@ -36,7 +36,7 @@ $('form').addEventListener('submit', async e => {
   $('send').disabled = $('input').disabled = true; $('sendLabel').textContent = '解構中...'; setStatus('ANALYZING', 'text-amber-400');
   let raw = '';
   try {
-    raw = await callLLM(cfg, buildSystem(cfg.systemPrompt), buildUserContent(text, cfg.context));
+    raw = await callLLM(cfg, buildSystem(SYSTEM_INSTRUCTION), buildUserContent(text, cfg.context));
     let r; try { r = parseAnalysis(raw); } catch { throw new Error('分析失敗：模型輸出了無效的格式，請稍後再試。'); }
     $('intro').classList.add('hidden');
     $('results').innerHTML = renderResult(r); icons(); setStatus('ONLINE', 'text-emerald-500');
@@ -57,5 +57,4 @@ $('testConn').addEventListener('click', async () => {
   catch (e) { $('connMsg').textContent = '❌ ' + e.message.slice(0, 200); setStatus('ERROR', 'text-rose-500'); }
 });
 $('clearKey').addEventListener('click', () => { cfg.apiKey = ''; save(); load(); });
-$('resetPrompt').addEventListener('click', () => { cfg.systemPrompt = SYSTEM_INSTRUCTION; save(); load(); });
 load(); $('send').disabled = true; icons();
