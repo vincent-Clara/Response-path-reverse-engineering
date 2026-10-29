@@ -68,7 +68,7 @@ window.listModels = async function (cfg) {
   else if (cfg.apiKey) headers['Authorization'] = 'Bearer ' + cfg.apiKey;
   const isLocal = /\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])/.test(base);
   const hint = cfg.provider === 'ollama'
-    ? '。Ollama 預設會擋掉從網頁來的請求：請先設定環境變數 OLLAMA_ORIGINS=*（或此網頁網址）後重啟 Ollama'
+    ? '。Ollama 預設只接受 localhost 開啟的頁面：請下載專案後雙擊「開啟.bat」（macOS/Linux 用 start.sh）開啟，或設定環境變數 OLLAMA_ORIGINS=* 後重啟 Ollama'
     : cfg.provider === 'lmstudio' ? '。請在 LM Studio 的 Server 設定開啟「Enable CORS」並確認伺服器已啟動'
     : isLocal ? '。請確認本地伺服器已啟動並允許跨來源請求（CORS）' : '';
   let res;
